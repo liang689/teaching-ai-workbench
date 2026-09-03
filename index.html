@@ -11,50 +11,40 @@
 
 <!-- ===== 顶部栏 ===== -->
 <header class="topbar">
-  <div class="brand">
+  <div class="brand" data-view="home" title="回到首页" style="cursor:pointer">
     <div class="logo">WB</div>
     <div class="brand-text">
       <h1>教学智能工作台</h1>
-      <p>教师 · 教研员 · 班主任 三合一</p>
+      <p>教师 · 教研员 · 班主任</p>
     </div>
   </div>
   <div class="top-actions">
     <div class="search-box">
       <span class="search-icon">🔍</span>
-      <input id="searchInput" type="text" placeholder="搜索场景名称、提示词关键词…" autocomplete="off">
-    </div>
-    <div class="role-switch" id="roleSwitch">
-      <button data-role="all" class="active" title="三合一总览">全部</button>
-      <button data-role="teacher" title="教师工作台：备课、上课、备赛、反思、自评">👩‍🏫 教师</button>
-      <button data-role="researcher" title="教研员工作台：培训、教研、评课、队伍管理">🔬 教研员</button>
-      <button data-role="headteacher" title="班主任工作台：班级记录、考勤、家校、班务">📋 班主任</button>
+      <input id="searchInput" type="text" placeholder="搜索工作名称、提示词关键词…" autocomplete="off">
     </div>
   </div>
 </header>
 
 <div class="layout">
 
-  <!-- ===== 侧边栏 ===== -->
+  <!-- ===== 侧边栏：三个工作台 ===== -->
   <aside class="sidebar">
     <nav id="sideNav">
-      <a data-view="dashboard" class="active"><span class="nav-icon">🏠</span>工作台首页</a>
+      <a data-view="home" class="active"><span class="nav-icon">🏠</span>总览首页</a>
       <a data-view="chat"><span class="nav-icon">🤖</span>AI 智能对话</a>
-      <div class="nav-group-title">七大维度</div>
-      <a data-view="dim" data-dim="赛"><span class="nav-icon">🏆</span>赛 · 评比备赛<span class="count" data-dim-count="赛"></span></a>
-      <a data-view="dim" data-dim="训"><span class="nav-icon">🎯</span>训 · 精准培训<span class="count" data-dim-count="训"></span></a>
-      <a data-view="dim" data-dim="教"><span class="nav-icon">📚</span>教 · 课堂教学<span class="count" data-dim-count="教"></span></a>
-      <a data-view="dim" data-dim="研"><span class="nav-icon">🔬</span>研 · 教研活动<span class="count" data-dim-count="研"></span></a>
-      <a data-view="dim" data-dim="评"><span class="nav-icon">📊</span>评 · 教学评价<span class="count" data-dim-count="评"></span></a>
-      <a data-view="dim" data-dim="管"><span class="nav-icon">🏫</span>管 · 队伍管理<span class="count" data-dim-count="管"></span></a>
-      <a data-view="dim" data-dim="班"><span class="nav-icon">📋</span>班 · 班级管理<span class="count" data-dim-count="班"></span></a>
+      <div class="nav-group-title">选择工作台</div>
+      <a data-view="role" data-role="teacher"><span class="nav-icon">👩‍🏫</span>教师工作台<span class="count" data-role-count="teacher"></span></a>
+      <a data-view="role" data-role="researcher"><span class="nav-icon">🔬</span>教研员工作台<span class="count" data-role-count="researcher"></span></a>
+      <a data-view="role" data-role="headteacher"><span class="nav-icon">📋</span>班主任工作台<span class="count" data-role-count="headteacher"></span></a>
       <div class="nav-group-title">我的</div>
       <a data-view="favorites"><span class="nav-icon">⭐</span>收藏夹<span class="count" id="favCount">0</span></a>
       <a data-view="about"><span class="nav-icon">💡</span>使用说明</a>
     </nav>
-    <div class="sidebar-foot">内容源自公众号文章<br>《20个WorkBuddy场景》+《教师工作台》</div>
+    <div class="sidebar-foot">源自公众号<br>《20个WorkBuddy场景》+《教师工作台》</div>
   </aside>
 
-  <!-- ===== 主内容区 ===== -->
+  <!-- ===== 主内容区（右侧显示所选工作台的各项工作） ===== -->
   <main id="main" class="main"></main>
 </div>
 
