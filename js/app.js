@@ -51,7 +51,17 @@
     return ok;
   }
 
-  const roleName = r => (r === 'teacher' ? '教师' : r === 'researcher' ? '教研' : '');
+  const roleInfo = r => ROLES.find(x => x.key === r) || null;
+  const roleName = r => { const x = roleInfo(r); return x ? x.name : ''; };
+  const roleIcon = r => { const x = roleInfo(r); return x ? x.icon : ''; };
+
+  /* 切换当前角色（顶部按钮 / 工作台入口卡共用） */
+  function setRole(role) {
+    state.role = role;
+    $$('#roleSwitch button').forEach(b => b.classList.toggle('active', b.dataset.role === role));
+    toast(role === 'all' ? '已回到「三合一总览」' : `已切换到「${roleIcon(role)} ${roleName(role)}工作台」`);
+    render();
+  }
 
   /* ---------- 筛选 ---------- */
   function visibleScenarios() {
@@ -99,34 +109,68 @@
     return `<div class="cards-grid">${list.map(cardHTML).join('')}</div>`;
   }
 
-  /* ---------- 仪表盘 ---------- */
+  /* ---------- 仪表盘（三合一总览 / 角色专属工作台） ---------- */
   function renderDashboard() {
     const now = new Date();
     const week = ['日', '一', '二', '三', '四', '五', '六'][now.getDay()];
-    const roleTxt = state.role === 'all' ? '老师 & 教研员' : roleName(state.role);
-    const myFavs = favs().length;
+    const cur = roleInfo(state.role);          // all → null
+    const isAll = !cur;
+    const heroTitle = cur ? `${cur.icon} ${cur.name}工作台` : '👋 你好，老师、教研员、班主任';
+    const roleScen = cur ? SCENARIOS.filter(s => s.roles.includes(cur.key)) : [];
+    const heroSub = cur
+      ? `这里是你的「${cur.name}工作台」—— ${cur.desc}，共 ${roleScen.length} 张专属场景卡片，点开即用。`
+      : '三大角色工作台合一：👩‍🏫 教师备课备赛反思 · 🔬 教研员培训教研评课 · 📋 班主任班级记录家校班务，各是一套卡片工作台，一键切换。';
 
-    const byDim = DIMENSIONS.map(d => {
-      const n = SCENARIOS.filter(s => s.dim === d.key).length;
-      return { d, n };
-    });
-
-    // 角色推荐
-    let recommended = SCENARIOS;
-    if (state.role !== 'all') recommended = recommended.filter(s => s.roles.includes(state.role));
-    const topRec = recommended.slice(0, 6);
-    const allRec = recommended.slice(6);
-
+    const roleStats = ROLES.map(r => ({ r, n: SCENARIOS.filter(s => s.roles.includes(r.key)).length }));
+    const byDim = DIMENSIONS.map(d => ({ d, n: SCENARIOS.filter(s => s.dim === d.key).length }));
     const recentsList = recents().map(scenarioOf).filter(Boolean).slice(0, 6);
 
-    const teacherCount = SCENARIOS.filter(s => s.roles.includes('teacher')).length;
-    const researcherCount = SCENARIOS.filter(s => s.roles.includes('researcher')).length;
+    /* 三大工作台集合入口卡 */
+    const wbCards = ROLES.map(r => {
+      const set = SCENARIOS.filter(s => s.roles.includes(r.key));
+      const chips = set.slice(0, 6);
+      const on = !isAll && state.role === r.key;
+      return `
+      <div class="wb-card ${on ? 'on' : ''}" data-wb-role="${r.key}">
+        <div class="wb-top">
+          <div class="wb-icon" style="--c:${r.color}">${r.icon}</div>
+          <div class="wb-head">
+            <h3>${r.name}工作台</h3>
+            <p>${r.desc}</p>
+          </div>
+          <span class="wb-count" style="color:${r.color};border-color:${r.color}">${set.length} 张卡片</span>
+        </div>
+        <div class="wb-chips">
+          ${chips.map(s => `<button class="wb-chip" data-scenario="${s.id}" title="${esc(s.action)}">${s.no} ${esc(s.title)}</button>`).join('')}
+          ${set.length > chips.length ? `<button class="wb-chip ghost" data-scenario-all="${r.key}">… 共 ${set.length} 个场景</button>` : ''}
+        </div>
+        <button class="wb-enter" data-wb-role="${r.key}" style="background:${r.color}">${on ? '✓ 正在使用此工作台' : `进入 ${r.name}工作台 →`}</button>
+      </div>`;
+    }).join('');
+
+    /* 角色专属全量卡片 或 三角色精选 */
+    let body;
+    if (!isAll) {
+      body = `
+        <div class="section-title">${cur.icon} ${cur.name}工作台 · 全部专属场景（${roleScen.length} 个）<span class="more">右上角可切换角色</span></div>
+        ${cardsGrid(roleScen)}
+        <p class="dim-note">💡 左侧「${DIMENSIONS.length} 大维度」可浏览全部 ${SCENARIOS.length} 个场景；点卡片右上角 ☆ 收藏。</p>`;
+    } else {
+      const seen = new Set();
+      const picks = [];
+      ROLES.forEach(r => SCENARIOS.filter(s => s.roles.includes(r.key)).slice(0, 3).forEach(s => {
+        if (!seen.has(s.id)) { seen.add(s.id); picks.push(s); }
+      }));
+      body = `
+        <div class="section-title">⭐ 三大角色精选（${picks.length}）<span class="more">点击上方工作台卡进入该角色全部场景</span></div>
+        ${cardsGrid(picks)}`;
+    }
 
     $('#main').innerHTML = `
       <div class="hero">
         <div>
-          <h2>👋 你好，${roleTxt}</h2>
-          <p>这里是你的教学 AI 工作台 —— 覆盖「赛 · 训 · 教 · 研 · 评 · 管」全链路的 ${SCENARIOS.length} 个场景提示词，复制即用。</p>
+          <h2>${heroTitle}</h2>
+          <p>${heroSub}</p>
         </div>
         <div class="hero-date">
           <div>${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日</div>
@@ -137,17 +181,17 @@
       <div class="stats-row">
         <div class="stat-card"><div class="s-icon" style="background:var(--primary-light)">🧩</div>
           <div><div class="s-num">${SCENARIOS.length}</div><div class="s-label">个 AI 场景</div></div></div>
-        <div class="stat-card"><div class="s-icon" style="background:#fef3e2">🏆</div>
-          <div><div class="s-num">6</div><div class="s-label">大维度</div></div></div>
-        <div class="stat-card"><div class="s-icon" style="background:#e7f7f3">👩‍🏫</div>
-          <div><div class="s-num">${teacherCount}</div><div class="s-label">教师场景</div></div></div>
-        <div class="stat-card"><div class="s-icon" style="background:#f3ecff">🔬</div>
-          <div><div class="s-num">${researcherCount}</div><div class="s-label">教研场景</div></div></div>
-        <div class="stat-card"><div class="s-icon" style="background:#fff8dc">⭐</div>
-          <div><div class="s-num">${myFavs}</div><div class="s-label">已收藏</div></div></div>
+        <div class="stat-card"><div class="s-icon" style="background:#eef1f7">🗂️</div>
+          <div><div class="s-num">${DIMENSIONS.length}</div><div class="s-label">大维度</div></div></div>
+        ${roleStats.map(({ r, n }) => `
+        <div class="stat-card"><div class="s-icon" style="background:${r.color}22">${r.icon}</div>
+          <div><div class="s-num">${n}</div><div class="s-label">${r.name}场景</div></div></div>`).join('')}
       </div>
 
-      <div class="section-title">🗂️ 六大维度快捷入口<span class="more"></span></div>
+      <div class="section-title">🧩 三大角色工作台（各是一套卡片式工作台）<span class="more"></span></div>
+      <div class="wb-grid">${wbCards}</div>
+
+      <div class="section-title">🗂️ ${DIMENSIONS.length} 大维度快捷入口<span class="more"></span></div>
       <div class="dim-grid">
         ${byDim.map(({ d, n }) => `
           <div class="dim-card" data-goto-dim="${d.key}">
@@ -175,11 +219,7 @@
         }).join('')}
       </div>` : ''}
 
-      <div class="section-title">⭐ 为你推荐<span class="more"></span></div>
-      ${cardsGrid(topRec)}
-      ${allRec.length ? `
-      <div class="section-title">更多场景</div>
-      ${cardsGrid(allRec)}` : ''}
+      ${body}
     `;
   }
 
@@ -210,40 +250,44 @@
 
   /* ---------- 使用说明 ---------- */
   function renderAbout() {
+    const cnt = k => SCENARIOS.filter(s => s.roles.includes(k)).length;
     $('#main').innerHTML = `
       <div class="view-head"><h2>💡 使用说明</h2></div>
       <div class="about-grid">
         <div class="about-card">
           <h3>🧩 工作台是什么</h3>
-          <p>本工作台依据公众号文章《从备课到评课，20个WorkBuddy场景帮你搞定教学全链路》整理而成，
-          将 20 个可直接使用的 AI 提示词场景，按 <b>赛（评比备赛）、训（精准培训）、教（课堂教学）、研（教研活动）、评（教学评价）、管（队伍管理）</b>
-          六个维度组织，教师与教研两条视角一键切换。</p>
+          <p>三合一教学智能工作台，内容源自两篇公众号文章：<b>《从备课到评课，20个WorkBuddy场景帮你搞定教学全链路》</b>（赛 / 训 / 教 / 研 / 评 / 管）+ <b>《教师工作台》</b>（班级管理）。共 ${SCENARIOS.length} 个场景，按 <b>${DIMENSIONS.length} 大维度</b>组织，教师 / 教研员 / 班主任三套卡片工作台一键切换。</p>
         </div>
         <div class="about-card">
           <h3>🪜 怎么用（三步）</h3>
           <ol>
-            <li><b>选场景</b>：按维度浏览或搜索，找到想省时间的任务；</li>
-            <li><b>复制提示词</b>：打开场景详情，一键复制提示词；</li>
-            <li><b>发给 AI</b>：粘贴到 WorkBuddy / DeepSeek / 文心一言 等任意对话式 AI，并附上材料（教案、成绩表、课堂实录等），按提示词对话即可。</li>
+            <li><b>选工作台</b>：打开首页，进入 👩‍🏫 教师 / 🔬 教研员 / 📋 班主任工作台，或按维度浏览、搜索；</li>
+            <li><b>复制提示词</b>：打开场景卡片，一键复制提示词；</li>
+            <li><b>发给 AI</b>：点「用此场景开始 AI 对话」直连大模型，或粘贴到 WorkBuddy / DeepSeek 等对话式 AI，附上材料（教案、成绩表、名单、记录等）即可。</li>
           </ol>
         </div>
         <div class="about-card">
-          <h3>👩‍🏫 教师视角</h3>
-          <p>覆盖 <b>${SCENARIOS.filter(s => s.roles.includes('teacher')).length} 个场景</b>：磨课备赛、学情分析、教学设计、课堂复盘、教学反思、自评自检。</p>
+          <h3>👩‍🏫 教师工作台</h3>
+          <p>覆盖 <b>${cnt('teacher')} 个场景</b>：磨课备赛、学情分析、教学设计、课堂复盘、教学反思、自评自检、过关记录整理。</p>
         </div>
         <div class="about-card">
-          <h3>🔬 教研视角</h3>
-          <p>覆盖 <b>${SCENARIOS.filter(s => s.roles.includes('researcher')).length} 个场景</b>：培训诊断与定制、同课异构、资源推送、赛事评课、成长画像、数据大屏。</p>
+          <h3>🔬 教研员工作台</h3>
+          <p>覆盖 <b>${cnt('researcher')} 个场景</b>：培训诊断与定制、同课异构、资源推送、赛事评课、成长画像、数据大屏。</p>
+        </div>
+        <div class="about-card">
+          <h3>📋 班主任工作台</h3>
+          <p>覆盖 <b>${cnt('headteacher')} 个场景</b>：今日班务总览、过关记录、成绩分析（无排名版）、考勤请假、家校沟通、值日排班、排座位、班务待办、班干部、学生档案、家长会材料。</p>
+          <p style="font-size:12px;color:var(--text-3);margin-top:6px">源自《教师工作台》思路：数据是帮老师发现问题的，不是给孩子排队贴标签的；家长联系方式只出现在个人页，汇总与打印一律脱敏。</p>
         </div>
         <div class="about-card">
           <h3>⚠️ 使用边界（重要）</h3>
           <p>每个场景均内置"使用边界"提醒：AI 输出仅供参考，需人工审核调整；不替代专家评审、教研组讨论或评委判定；
-          注意保护学生与教师隐私，不做横向排名、不贴负面标签。请务必遵守。</p>
+          保护学生与家长隐私，不做横向排名、不贴负面标签；真实学生资料只放在自己的资料库里，不要公开发布。</p>
         </div>
         <div class="about-card">
           <h3>📦 导出提示词库</h3>
-          <p>一键导出全部 20 个场景的提示词为 Markdown 文件，方便存档、打印或导入其他工具。</p>
-          <p style="margin-top:12px"><button class="btn" id="exportBtn">⬇️ 导出全部提示词（.md）</button></p>
+          <p>一键导出全部 ${SCENARIOS.length} 个场景的提示词为 Markdown 文件，方便存档、打印或导入其他工具。</p>
+          <p style="margin-top:12px"><button class="btn" id="exportBtn">⬇️ 导出全部 ${SCENARIOS.length} 个提示词（.md）</button></p>
         </div>
       </div>`;
     $('#exportBtn').addEventListener('click', exportAll);
@@ -396,20 +440,21 @@
 
   /* ---------- 导出 ---------- */
   function exportAll() {
-    let md = `# 教学全链路 20 个 AI 场景提示词库\n\n> 依据公众号文章《从备课到评课，20个WorkBuddy场景帮你搞定教学全链路》整理\n\n`;
+    let md = `# 教学智能工作台 · ${SCENARIOS.length} 个 AI 场景提示词库\n\n> 内容源自公众号文章《从备课到评课，20个WorkBuddy场景帮你搞定教学全链路》与《教师工作台》\n\n`;
     for (const d of DIMENSIONS) {
       const list = SCENARIOS.filter(s => s.dim === d.key);
       md += `\n## ${d.icon} ${d.name}\n\n`;
       for (const s of list) {
+        const rolesTxt = s.roles.map(roleName).join('、');
         md += `### ${s.no} ${s.title}\n\n`;
-        md += `- **适合谁**：${s.audience}\n- **能干什么**：${s.action}\n- **需要材料**：${s.materials.join('、')}\n- **使用边界**：${s.note}\n\n`;
+        md += `- **适用角色**：${rolesTxt}\n- **适合谁**：${s.audience}\n- **能干什么**：${s.action}\n- **需要材料**：${s.materials.join('、')}\n- **使用边界**：${s.note}\n\n`;
         md += `**提示词：**\n\n\`\`\`\n${s.prompt}\n\`\`\`\n\n---\n\n`;
       }
     }
     const blob = new Blob(['\ufeff' + md], { type: 'text/markdown;charset=utf-8' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = '教学全链路20个AI场景提示词库.md';
+    a.download = '教学智能工作台提示词库.md';
     a.click();
     URL.revokeObjectURL(a.href);
     toast('📦 已导出 Markdown 文件');
@@ -421,10 +466,7 @@
     $('#roleSwitch').addEventListener('click', e => {
       const btn = e.target.closest('button');
       if (!btn) return;
-      state.role = btn.dataset.role;
-      $$('#roleSwitch button').forEach(b => b.classList.toggle('active', b === btn));
-      toast(`已切换为${state.role === 'all' ? '「全部」视角' : `「${roleName(state.role)}」视角`}`);
-      render();
+      setRole(btn.dataset.role);
     });
 
     // 侧边栏导航
@@ -444,8 +486,16 @@
       }, 200);
     });
 
-    // 主内容区事件委托：打开卡片 / 收藏 / 维度跳转 / 导出
+    // 主内容区事件委托：角色工作台 / 场景卡 / 收藏 / 维度跳转 / 导出
     $('#main').addEventListener('click', e => {
+      // 场景快捷卡（在工作台入口卡内，优先于切角色）
+      const scChip = e.target.closest('[data-scenario]');
+      if (scChip) { openModal(+scChip.dataset.scenario); return; }
+      const allChip = e.target.closest('[data-scenario-all]');
+      if (allChip) { setRole(allChip.dataset.scenarioAll); return; }
+      // 进入/切换角色工作台
+      const wb = e.target.closest('[data-wb-role]');
+      if (wb) { setRole(wb.dataset.wbRole); return; }
       const dimCard = e.target.closest('[data-goto-dim]');
       if (dimCard) {
         state.view = 'dim'; state.dim = dimCard.dataset.gotoDim; state.query = '';

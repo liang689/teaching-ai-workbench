@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>教学全链路智能工作台 · 教师 / 教研</title>
-<meta name="description" content="基于《从备课到评课，20个WorkBuddy场景帮你搞定教学全链路》整理的教师与教研智能工作台，覆盖赛、训、教、研、评、管六大维度。">
+<title>教学智能工作台 · 教师 / 教研员 / 班主任</title>
+<meta name="description" content="三合一智能工作台：教师（备课备赛反思）、教研员（培训教研评价管理）、班主任（班级管理家校班务），AI 场景覆盖赛训教研评管班七大维度。">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -14,8 +14,8 @@
   <div class="brand">
     <div class="logo">WB</div>
     <div class="brand-text">
-      <h1>教学全链路智能工作台</h1>
-      <p>20 个 AI 场景 · 覆盖赛 / 训 / 教 / 研 / 评 / 管</p>
+      <h1>教学智能工作台</h1>
+      <p>教师 · 教研员 · 班主任 三合一</p>
     </div>
   </div>
   <div class="top-actions">
@@ -24,9 +24,10 @@
       <input id="searchInput" type="text" placeholder="搜索场景名称、提示词关键词…" autocomplete="off">
     </div>
     <div class="role-switch" id="roleSwitch">
-      <button data-role="all" class="active" title="查看全部 20 个场景">全部</button>
-      <button data-role="teacher" title="教师视角：备课、上课、备赛、反思、自评">👩‍🏫 教师</button>
-      <button data-role="researcher" title="教研视角：培训、教研、评课、队伍管理">🔬 教研</button>
+      <button data-role="all" class="active" title="三合一总览">全部</button>
+      <button data-role="teacher" title="教师工作台：备课、上课、备赛、反思、自评">👩‍🏫 教师</button>
+      <button data-role="researcher" title="教研员工作台：培训、教研、评课、队伍管理">🔬 教研员</button>
+      <button data-role="headteacher" title="班主任工作台：班级记录、考勤、家校、班务">📋 班主任</button>
     </div>
   </div>
 </header>
@@ -38,18 +39,19 @@
     <nav id="sideNav">
       <a data-view="dashboard" class="active"><span class="nav-icon">🏠</span>工作台首页</a>
       <a data-view="chat"><span class="nav-icon">🤖</span>AI 智能对话</a>
-      <div class="nav-group-title">六大维度</div>
+      <div class="nav-group-title">七大维度</div>
       <a data-view="dim" data-dim="赛"><span class="nav-icon">🏆</span>赛 · 评比备赛<span class="count" data-dim-count="赛"></span></a>
       <a data-view="dim" data-dim="训"><span class="nav-icon">🎯</span>训 · 精准培训<span class="count" data-dim-count="训"></span></a>
       <a data-view="dim" data-dim="教"><span class="nav-icon">📚</span>教 · 课堂教学<span class="count" data-dim-count="教"></span></a>
       <a data-view="dim" data-dim="研"><span class="nav-icon">🔬</span>研 · 教研活动<span class="count" data-dim-count="研"></span></a>
       <a data-view="dim" data-dim="评"><span class="nav-icon">📊</span>评 · 教学评价<span class="count" data-dim-count="评"></span></a>
       <a data-view="dim" data-dim="管"><span class="nav-icon">🏫</span>管 · 队伍管理<span class="count" data-dim-count="管"></span></a>
+      <a data-view="dim" data-dim="班"><span class="nav-icon">📋</span>班 · 班级管理<span class="count" data-dim-count="班"></span></a>
       <div class="nav-group-title">我的</div>
       <a data-view="favorites"><span class="nav-icon">⭐</span>收藏夹<span class="count" id="favCount">0</span></a>
       <a data-view="about"><span class="nav-icon">💡</span>使用说明</a>
     </nav>
-    <div class="sidebar-foot">依据公众号文章<br>《20个WorkBuddy场景帮你搞定教学全链路》</div>
+    <div class="sidebar-foot">内容源自公众号文章<br>《20个WorkBuddy场景》+《教师工作台》</div>
   </aside>
 
   <!-- ===== 主内容区 ===== -->
