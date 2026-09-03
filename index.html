@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>教学全链路智能工作台 · 教师 / 教研</title>
+<meta name="description" content="基于《从备课到评课，20个WorkBuddy场景帮你搞定教学全链路》整理的教师与教研智能工作台，覆盖赛、训、教、研、评、管六大维度。">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ===== 顶部栏 ===== -->
+<header class="topbar">
+  <div class="brand">
+    <div class="logo">WB</div>
+    <div class="brand-text">
+      <h1>教学全链路智能工作台</h1>
+      <p>20 个 AI 场景 · 覆盖赛 / 训 / 教 / 研 / 评 / 管</p>
+    </div>
+  </div>
+  <div class="top-actions">
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input id="searchInput" type="text" placeholder="搜索场景名称、提示词关键词…" autocomplete="off">
+    </div>
+    <div class="role-switch" id="roleSwitch">
+      <button data-role="all" class="active" title="查看全部 20 个场景">全部</button>
+      <button data-role="teacher" title="教师视角：备课、上课、备赛、反思、自评">👩‍🏫 教师</button>
+      <button data-role="researcher" title="教研视角：培训、教研、评课、队伍管理">🔬 教研</button>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- ===== 侧边栏 ===== -->
+  <aside class="sidebar">
+    <nav id="sideNav">
+      <a data-view="dashboard" class="active"><span class="nav-icon">🏠</span>工作台首页</a>
+      <a data-view="chat"><span class="nav-icon">🤖</span>AI 智能对话</a>
+      <div class="nav-group-title">六大维度</div>
+      <a data-view="dim" data-dim="赛"><span class="nav-icon">🏆</span>赛 · 评比备赛<span class="count" data-dim-count="赛"></span></a>
+      <a data-view="dim" data-dim="训"><span class="nav-icon">🎯</span>训 · 精准培训<span class="count" data-dim-count="训"></span></a>
+      <a data-view="dim" data-dim="教"><span class="nav-icon">📚</span>教 · 课堂教学<span class="count" data-dim-count="教"></span></a>
+      <a data-view="dim" data-dim="研"><span class="nav-icon">🔬</span>研 · 教研活动<span class="count" data-dim-count="研"></span></a>
+      <a data-view="dim" data-dim="评"><span class="nav-icon">📊</span>评 · 教学评价<span class="count" data-dim-count="评"></span></a>
+      <a data-view="dim" data-dim="管"><span class="nav-icon">🏫</span>管 · 队伍管理<span class="count" data-dim-count="管"></span></a>
+      <div class="nav-group-title">我的</div>
+      <a data-view="favorites"><span class="nav-icon">⭐</span>收藏夹<span class="count" id="favCount">0</span></a>
+      <a data-view="about"><span class="nav-icon">💡</span>使用说明</a>
+    </nav>
+    <div class="sidebar-foot">依据公众号文章<br>《20个WorkBuddy场景帮你搞定教学全链路》</div>
+  </aside>
+
+  <!-- ===== 主内容区 ===== -->
+  <main id="main" class="main"></main>
+</div>
+
+<!-- ===== 场景详情弹窗 ===== -->
+<div class="modal-mask" id="modalMask" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <button class="modal-close" id="modalClose" aria-label="关闭">✕</button>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<!-- ===== 轻提示 ===== -->
+<div class="toast" id="toast" hidden></div>
+
+<!-- ===== AI 模型连接设置弹窗 ===== -->
+<div class="modal-mask" id="aiSettingsMask" hidden>
+  <div class="modal modal-sm">
+    <button class="modal-close" id="aiSettingsClose" aria-label="关闭">✕</button>
+    <div class="modal-body">
+      <h2 class="m-title" style="font-size:19px">⚙️ AI 模型连接设置</h2>
+      <p class="m-aud">支持任意 OpenAI 兼容接口：DeepSeek / 通义千问 / Kimi / 智谱 / OpenAI / 本地 Ollama</p>
+      <div class="m-block">
+        <label class="f-label">快捷选择服务商</label>
+        <select id="providerSel" class="f-input"></select>
+      </div>
+      <div class="m-block">
+        <label class="f-label">接口地址（Base URL）</label>
+        <input id="baseUrlInput" class="f-input" placeholder="https://api.deepseek.com/v1" spellcheck="false">
+      </div>
+      <div class="m-block">
+        <label class="f-label">API Key</label>
+        <div class="f-row">
+          <input id="apiKeyInput" class="f-input" type="password" placeholder="sk-…（仅保存在本机浏览器）" spellcheck="false">
+          <button class="btn ghost" id="toggleKeyBtn" type="button">显示</button>
+        </div>
+      </div>
+      <div class="m-block">
+        <label class="f-label">模型名称</label>
+        <input id="modelInput" class="f-input" placeholder="deepseek-chat" spellcheck="false">
+      </div>
+      <div class="m-block">
+        <label class="f-label">温度（随机性）：<span id="tempVal" style="color:var(--primary-dark);font-weight:700">0.7</span></label>
+        <input id="tempRange" type="range" min="0" max="2" step="0.1" value="0.7" style="width:100%">
+      </div>
+      <div class="m-block">
+        <label class="f-label">单次最大输出 tokens</label>
+        <input id="maxTokInput" class="f-input" type="number" value="4096" min="256" max="32768">
+      </div>
+      <div class="m-block" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <button class="btn ghost" id="testConnBtn">🔌 测试连接</button>
+        <span id="testConnStatus" class="f-status"></span>
+      </div>
+      <div class="m-block" style="display:flex;gap:10px">
+        <button class="btn" id="saveSettingsBtn">💾 保存并连接</button>
+        <button class="btn ghost" id="cancelSettingsBtn">取消</button>
+      </div>
+      <div class="note-box" style="margin-top:16px">💡 <b>提示</b>：Key 仅保存在本机浏览器（localStorage）。若浏览器提示跨域（CORS）拦截，可在快捷选择中改用 <b>Ollama 本地</b>（免费无需 Key），或自建 OpenAI 兼容网关（one-api / new-api）。</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 场景提示词（系统指令）弹窗 ===== -->
+<div class="modal-mask" id="sysMask" hidden>
+  <div class="modal modal-sm">
+    <button class="modal-close" id="sysClose" aria-label="关闭">✕</button>
+    <div class="modal-body">
+      <h2 class="m-title" style="font-size:19px">🧭 场景提示词（系统指令）</h2>
+      <p class="m-aud">当前：<b id="sysName2">通用教育助手</b> —— 选择工作台场景后，AI 将扮演对应角色；也可自定义。</p>
+      <div class="m-block">
+        <label class="f-label">选择场景</label>
+        <select id="sysSelect" class="f-input"></select>
+      </div>
+      <div class="m-block">
+        <label class="f-label">提示词内容（可编辑）</label>
+        <textarea id="sysTextarea" class="f-input" rows="12" style="font-family:Consolas,'Microsoft YaHei',monospace;font-size:12.5px;line-height:1.7"></textarea>
+      </div>
+      <div class="m-block" style="display:flex;gap:10px">
+        <button class="btn" id="sysSaveBtn">✅ 应用此提示词</button>
+        <button class="btn ghost" id="sysCancelBtn">取消</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/markdown.js"></script>
+<script src="js/vendor/jszip.min.js"></script>
+<script src="js/office.js"></script>
+<script src="js/chat.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
